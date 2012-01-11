@@ -15,10 +15,22 @@
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
     <Window.ToolTip>
-        <TextBlock><Run Text="- "/><Bold><Run Text="Drop"/></Bold><Run Text="documents inside this box to sign it."/><LineBreak/><Run Text="- "/><Bold><Run Text="Drag"/></Bold><Run Text=" this box to move it."/><LineBreak/><Run Text="- "/><Bold><Run Text="Press [ESC]"/></Bold><Run Text=" to close this box"/></TextBlock>
+        <TextBlock>
+            <Run Text=" - "/>
+            <Bold><Run Text="To sign a document"/></Bold>
+            <Run Text=" Drag and drop the document into this box. (The document must be one of the following formats: pdf, docx, xlsx, pptx)"/>
+            <LineBreak/>
+            <Run Text=" - "/>
+            <Bold><Run Text="To move this box"/></Bold>
+            <Run Text=" just drag it around."/>
+            <LineBreak/>
+            <Run Text=" - "/>
+            <Bold><Run Text="To close this box"/></Bold>
+            <Run Text=" press [ESC]"/>
+        </TextBlock>
     </Window.ToolTip>
     <Window.DataContext>
-        <local:DocumentViewModel/>
+        <local:SignJob/>
     </Window.DataContext>
     <Grid x:Name="LayoutRoot" MouseDown="LayoutRoot_MouseDown" ScrollViewer.VerticalScrollBarVisibility="Disabled">
     	<Grid.Background>

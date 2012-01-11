@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace wSignerUI
 {
-    public class DocumentViewModel : INotifyPropertyChanged
+    public class SignJob : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private void FirePropertyChanged(string propName)
@@ -41,11 +41,11 @@ namespace wSignerUI
             {
                 return HasSelected
                         ? IsNeither
-                           ? "Only PDF and Microsoft Office 2007 documents (docx, xlsx, pptx) are supported at the moment."
+                           ? "Document(s) not supported"
                            : Count > 1
                                 ? "Sign " + Path.GetFileName(_docsToSign[0])
                                 : "Sign " + _docsToSign.Length + "documents"
-                        : "Drop documents into this box to sign with your digital signature. (Supports pdf, docx, xlsx, pptx)";
+                        : "Drop your pdf, docx, xlsx, or pptx documents here to digitally sign it.";
             }
         }
 

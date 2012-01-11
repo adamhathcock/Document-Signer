@@ -15,14 +15,17 @@ namespace wSignerUI
         public MainWindow()
         {
             InitializeComponent();
-            Window.DataContext = ViewModel = new DocumentViewModel();
+            Window.DataContext = ViewModel = new SignJob();
         }
 
-        public DocumentViewModel ViewModel { get; set; }
+        public SignJob ViewModel { get; set; }
 
         private void LayoutRoot_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            DragMove();
+            if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                DragMove();    
+            }
         }
 
         private void Window_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
