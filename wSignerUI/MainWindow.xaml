@@ -10,7 +10,7 @@
     Height="84" 
     ResizeMode="NoResize" 
     WindowStyle="None" 
-    AllowsTransparency="True" KeyUp="Window_KeyUp" Drop="Window_Drop" AllowDrop="True" DragEnter="Window_DragEnter" DragLeave="Window_DragLeave" Background="{x:Null}" Icon="/wSignerUI;component/Application.ico">
+    AllowsTransparency="True" KeyUp="Window_KeyUp" Drop="Window_Drop" AllowDrop="True" DragEnter="Window_DragEnter" Background="{x:Null}" Icon="/wSignerUI;component/Application.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
@@ -30,26 +30,17 @@
         </TextBlock>
     </Window.ToolTip>
     <Window.DataContext>
-        <local:SignJob/>
+        <local:DocumentSignerViewModel/>
     </Window.DataContext>
-    <Grid x:Name="LayoutRoot" MouseDown="LayoutRoot_MouseDown" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+    <Grid x:Name="LayoutRoot" MouseDown="LayoutRoot_MouseDown">
     	<Grid.Background>
     		<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
     			<GradientStop Color="Gray" Offset="0"/>
     			<GradientStop Color="#FF707070" Offset="1"/>
-    			<GradientStop Color="White" Offset="0.476"/>
+    			<GradientStop Color="White" Offset="0.5"/>
     		</LinearGradientBrush>
     	</Grid.Background>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="128"/>
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="txtMsg" TextWrapping="Wrap" Text="{Binding StatusText}" Width="208" FontSize="16" VerticalAlignment="Center" Margin="16,0,0,0" HorizontalAlignment="Left" d:LayoutOverrides="HorizontalMargin" TextTrimming="WordEllipsis"/>
-        <StackPanel Grid.Column="1" Margin="0,6">
-            <Image Source="Resources/filetypes.png" Stretch="Fill" Visibility="{Binding HasNotSelected, Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" VerticalAlignment="Center" Height="72" Margin="-7.765,0,-4,0"/>
-            <Image Source="Resources/filetype-invalid.png" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Height="72" Width="72" Visibility="{Binding IsNeither, Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Margin="0,0,28,0"/>
-            <Image Source="Resources/filetype-ooxml.png" Stretch="Fill" Width="72"  Visibility="{Binding IsOOXML, Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Height="72" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,28,0"/>
-            <Image Source="Resources/filetype-pdf.png" Stretch="Fill" Width="72" Visibility="{Binding IsPDF, Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Height="72" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,28,0"/>
-        </StackPanel>
     </Grid>
 </Window>

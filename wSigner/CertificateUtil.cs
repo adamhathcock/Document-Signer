@@ -19,7 +19,7 @@ namespace wSigner
         /// <param name="selector">The selector.</param>
         /// <param name="useLocalMachine">if set to <c>true</c> [use local machine].</param>
         /// <returns></returns>
-        public static IEnumerable<T> GetAll<T>(Func<X509Certificate, T> selector, bool useLocalMachine = false)
+        public static IEnumerable<T> GetAll<T>(Func<X509Certificate2, T> selector, bool useLocalMachine = false)
         {
             if (selector == null)
             {

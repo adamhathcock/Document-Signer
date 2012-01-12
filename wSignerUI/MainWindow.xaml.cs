@@ -1,9 +1,4 @@
-﻿using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using wSigner;
+﻿using System.Windows;
 
 namespace wSignerUI
 {
@@ -15,10 +10,10 @@ namespace wSignerUI
         public MainWindow()
         {
             InitializeComponent();
-            Window.DataContext = ViewModel = new SignJob();
+            Window.DataContext = ViewModel = new DocumentSignerViewModel();
         }
 
-        public SignJob ViewModel { get; set; }
+        public DocumentSignerViewModel ViewModel { get; set; }
 
         private void LayoutRoot_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -48,7 +43,7 @@ namespace wSignerUI
                 return;
             }
             e.Effects = DragDropEffects.Copy;
-            ViewModel.DocsToSign = filePaths;
+            
         }
 
         private void Window_Drop(object sender, DragEventArgs e)
@@ -58,36 +53,7 @@ namespace wSignerUI
             {
                 return;
             }
-            var cert = CertificateUtil.GetByDialog();
-            if (cert == null)
-            {
-                return;
-            }
-
-            foreach (var filePath in filePaths)
-            {
-                var dir = Path.GetDirectoryName(filePath);
-                var fileName = Path.GetFileNameWithoutExtension(filePath);
-                var ext = Path.GetExtension(filePath);
-
-                var outputPath = Path.Combine(dir, fileName + "-signed" + ext);
-                var path = filePath;
-
-                var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-                var signTask = Task.Factory.StartNew(() => DocumentSigner.For(ext).Sign(path, outputPath, cert));
-                signTask.ContinueWith(task => MessageBox.Show(this, @"Error: " + task.Exception.InnerException.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error), CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, scheduler);
-                signTask.ContinueWith(task => Process.Start(new ProcessStartInfo { FileName = outputPath, UseShellExecute = true }), TaskContinuationOptions.OnlyOnRanToCompletion);
-                signTask.ContinueWith(task => ViewModel.DocsToSign = null, CancellationToken.None, TaskContinuationOptions.None, scheduler);
-                if (filePaths.Length == 1)
-                {
-                    signTask.ContinueWith(task => Clipboard.SetText(outputPath, TextDataFormat.UnicodeText), CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, scheduler);
-                }
-            }
-        }
-
-        private void Window_DragLeave(object sender, DragEventArgs e)
-        {
-            ViewModel.DocsToSign = null;
+            ViewModel.AddFiles(filePaths);
         }
     }
 }

@@ -40,6 +40,7 @@
   <ItemGroup>
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="PresentationCore" />
     <Reference Include="WindowsBase" />
@@ -49,6 +50,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\DocumentSignerViewModel.cs" />
+    <Compile Include="Plumbing\NativeMethods.cs" />
+    <Compile Include="Plumbing\RelayCommand.cs" />
+    <Compile Include="ViewModels\SignJobState.cs" />
+    <Compile Include="ViewModels\SignJobViewModel.cs" />
+    <Compile Include="Plumbing\Utils.cs" />
+    <Compile Include="Plumbing\ViewModelBase.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -57,7 +65,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="SignJob.cs" />
+    <Compile Include="ViewModels\CertInfo.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
