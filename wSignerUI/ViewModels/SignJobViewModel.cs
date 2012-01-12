@@ -2,47 +2,69 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace wSignerUI
 {
     public class SignJobViewModel:ViewModelBase
     {
-        private static string[] SupportedExts = new[] {".pdf", ".docx", ".xlsx", ".pptx"};
+        private static string[] SupportedExts = new[] { ".pdf", ".docx", ".xlsx", ".pptx" };
 
         public SignJobViewModel(string inputFile)
         {
+            if(String.IsNullOrEmpty(inputFile) 
+                || !File.Exists(inputFile) 
+                || !SupportedExts.Any(validExt=>inputFile.EndsWith(validExt,StringComparison.InvariantCultureIgnoreCase)))
+            {
+                State = SignJobState.Invalid;
+                return;
+            }
+
+            InputFile = inputFile;
+            InputFileName = Path.GetFileName(inputFile);
+
             var dir = Path.GetDirectoryName(inputFile);
             var fileName = Path.GetFileNameWithoutExtension(inputFile);
             var ext = Path.GetExtension(inputFile);
-
-            InputFile = inputFile;
             OutputFile = Path.Combine(dir, fileName + "-signed" + ext);
-            FileType = Path.GetExtension(inputFile);
-
-            if (SupportedExts.Any(validExt => validExt.Equals(FileType, System.StringComparison.InvariantCultureIgnoreCase)))
-            {
-                State = SignJobState.Pending;
-            }
-            else
-            {
-                State = SignJobState.Invalid;
-            }
-
+            FileType = ext;
             Icon = Utils.GetBitmapSourceIconFromFile(inputFile);
+            OpenOutput = new RelayCommand(
+                    o => Process.Start(new ProcessStartInfo { FileName = OutputFile, UseShellExecute = true }),
+                    o => IsSuccessful);
+            OpenInput = new RelayCommand(o => Process.Start(new ProcessStartInfo { FileName = InputFile, UseShellExecute = true }));
 
-            Open = new RelayCommand(
-                        o => Process.Start(new ProcessStartInfo { FileName = OutputFile, UseShellExecute = true }), 
-                        o => IsSuccessful);
+            State = SignJobState.Pending;
         }
 
-        public SignJobState State { get; set; }
+        private SignJobState _state;
+        public SignJobState State
+        {
+            get { return _state; }
+            set
+            {
+                if (_state != value)
+                {
+                    _state = value;
+                    FirePropertyChanged(() => State);
+                    FirePropertyChanged(() => IsBusy);
+                    FirePropertyChanged(() => IsCompleted);
+                    FirePropertyChanged(() => IsSuccessful);
+                    FirePropertyChanged(() => IsFaulted);
+                    FirePropertyChanged(() => IsReady);
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
 
         public BitmapSource Icon { get; set; }
 
-        public string InputFile { get; private set; }
+        public string InputFile { get; set; }
 
-        public string OutputFile { get; private set; }
+        public string InputFileName { get; set; }
+
+        public string OutputFile { get; set; }
 
         public string FileType { get; set; }
 
@@ -50,7 +72,7 @@ namespace wSignerUI
 
         public string Error { get; set; }
 
-        public bool IsBusy { get { return State == SignJobState.Pending || State == SignJobState.Signing; } }
+        public bool IsBusy { get { return State == SignJobState.Signing; } }
 
         public bool IsCompleted { get { return State == SignJobState.Signed || State == SignJobState.Failed; } }
 
@@ -62,12 +84,14 @@ namespace wSignerUI
 
         public bool IsReady { get { return State == SignJobState.Pending; } }
 
-        public RelayCommand Open { get; set; }
+        public bool IsFree { get { return !IsBusy; } }
+
+        public RelayCommand OpenOutput { get; set; }
+
+        public RelayCommand OpenInput { get; set; }
 
         public RelayCommand Sign { get; set; }
 
         public RelayCommand Close { get; set; }
-
-        
     }
 }

@@ -18,7 +18,21 @@ namespace wSignerUI
             Jobs = new ObservableCollection<SignJobViewModel>();
         }
 
+        private X509Certificate2 _activeCert;
+
         public ObservableCollection<CertInfo> Certs { get; private set; }
+
+        public X509Certificate2 ActiveCert
+        {
+            get
+            {
+                return _activeCert ??
+                        (_activeCert = SelectedCertInfo != null
+                                        && !String.IsNullOrEmpty(SelectedCertInfo.Serial)
+                                        ? CertificateUtil.GetBySerial(SelectedCertInfo.Serial)
+                                        : null);
+            }
+        }
 
         private CertInfo _selectedCertInfo;
         public CertInfo SelectedCertInfo
@@ -30,6 +44,7 @@ namespace wSignerUI
             set
             {
                 _selectedCertInfo = value;
+                _activeCert = null;
                 FirePropertyChanged(() => SelectedCertInfo);
                 //TODO:update jobs' can execute commands
             }
@@ -62,21 +77,6 @@ namespace wSignerUI
             SelectedCertInfo = Certs.FirstOrDefault();
         }
 
-        private X509Certificate2 _activeCert;
-
-        internal X509Certificate2 ActiveCert
-        {
-            get
-            {
-                var selection = SelectedCertInfo;
-                if(_activeCert == null || (selection != null && _activeCert.SerialNumber != selection.Serial))
-                {
-                    _activeCert = CertificateUtil.GetBySerial(selection.Serial);
-                }
-                return _activeCert;
-            }
-        }
-
         public void AddFiles(params string[] files)
         {
             foreach (var file in files)
@@ -86,32 +86,29 @@ namespace wSignerUI
                 {
                     continue;
                 }
+
                 job.Close = new RelayCommand(x => Jobs.Remove(job), x=>!job.IsBusy);
                 job.Sign = new RelayCommand(x =>
-                {
-                    var signTask = Task.Factory
-                    .StartNew(() =>
-                    {
-                        Thread.Sleep(50);
-                        job.State = SignJobState.Signing;
-                        DocumentSigner.For(job.FileType)
-                                        .Sign(job.InputFile, job.OutputFile, ActiveCert);
-                    });
-                    signTask.ContinueWith(task =>
-                    {
-                        job.Error = task.Exception.InnerException.Message;
-                        job.State = SignJobState.Failed;
-                    }, TaskContinuationOptions.OnlyOnFaulted);
-                    signTask.ContinueWith(task =>
-                    {
-                        job.State = SignJobState.Signed;
-                    }, TaskContinuationOptions.OnlyOnRanToCompletion);
-                }, x => job.IsReady && SelectedCertInfo != null);
+                            {
+                                Task.Factory
+                                    .StartNew(() =>
+                                    {
+                                        Thread.Sleep(50);
+                                        job.State = SignJobState.Signing;
+                                        DocumentSigner.For(job.FileType).Sign(job.InputFile, job.OutputFile, ActiveCert);
+                                    })
+                                    .ContinueWith(task =>
+                                    {
+                                        job.Error = task.Exception.InnerException.Message;
+                                        job.State = SignJobState.Failed;
+                                    }, TaskContinuationOptions.OnlyOnFaulted)
+                                    .ContinueWith(task => job.State = SignJobState.Signed, TaskContinuationOptions.OnlyOnRanToCompletion);
+                            }, x => job.IsReady && ActiveCert != null);
                 Jobs.Add(job);
-                if (job.IsReady)
-                {
-                    job.Sign.Execute(null);
-                }
+                //if (job.IsReady)
+                //{
+                //    job.Sign.Execute(null);
+                //}
             }
         }
     }

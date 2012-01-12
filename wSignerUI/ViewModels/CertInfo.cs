@@ -4,6 +4,8 @@ namespace wSignerUI
 {
     public class CertInfo
     {
+        public string Title { get; set; }
+
         public string Subject {get;set;}
 
         public string Issuer {get;set;}
@@ -13,5 +15,14 @@ namespace wSignerUI
         public DateTime ValidAfter {get; set; }
 
         public string Serial {get;set;}
+
+        public bool IsValid
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return ValidAfter < now && now < ValidBefore;
+            }
+        }
     }
 }

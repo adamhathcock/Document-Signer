@@ -31,6 +31,7 @@ namespace wSigner
                 store = OpenReadStore(useLocalMachine);
                 return store.Certificates
                             .Cast<X509Certificate2>()
+                            .Where(cert=>cert.HasPrivateKey)
                             .Select(selector)
                             .ToArray();
             }
@@ -50,7 +51,7 @@ namespace wSigner
         /// <param name="useLocalMachine">if set to <c>true</c> [use local machine].</param>
         /// <param name="validOnly">if set to <c>true</c> [valid only].</param>
         /// <returns></returns>
-        public static X509Certificate2 GetBySerial(string serial, bool useLocalMachine = true, bool validOnly = false)
+        public static X509Certificate2 GetBySerial(string serial, bool useLocalMachine = false, bool validOnly = false)
         {
             if (String.IsNullOrEmpty(serial))
             {

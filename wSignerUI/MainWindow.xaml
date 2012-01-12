@@ -6,41 +6,65 @@
     x:Class="wSignerUI.MainWindow"
     x:Name="Window"
     Title="wSigner"
-    Width="384" 
-    Height="84" 
-    ResizeMode="NoResize" 
-    WindowStyle="None" 
-    AllowsTransparency="True" KeyUp="Window_KeyUp" Drop="Window_Drop" AllowDrop="True" DragEnter="Window_DragEnter" Background="{x:Null}" Icon="/wSignerUI;component/Application.ico">
+    WindowStyle="SingleBorderWindow"
+    AllowsTransparency="False" KeyUp="Window_KeyUp" Icon="/wSignerUI;component/Application.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-    <Window.ToolTip>
-        <TextBlock>
-            <Run Text=" - "/>
-            <Bold><Run Text="To sign a document"/></Bold>
-            <Run Text=" Drag and drop the document into this box. (The document must be one of the following formats: pdf, docx, xlsx, pptx)"/>
-            <LineBreak/>
-            <Run Text=" - "/>
-            <Bold><Run Text="To move this box"/></Bold>
-            <Run Text=" just drag it around."/>
-            <LineBreak/>
-            <Run Text=" - "/>
-            <Bold><Run Text="To close this box"/></Bold>
-            <Run Text=" press [ESC]"/>
-        </TextBlock>
-    </Window.ToolTip>
-    <Window.DataContext>
-        <local:DocumentSignerViewModel/>
-    </Window.DataContext>
-    <Grid x:Name="LayoutRoot" MouseDown="LayoutRoot_MouseDown">
-    	<Grid.Background>
-    		<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-    			<GradientStop Color="Gray" Offset="0"/>
-    			<GradientStop Color="#FF707070" Offset="1"/>
-    			<GradientStop Color="White" Offset="0.5"/>
-    		</LinearGradientBrush>
-    	</Grid.Background>
-        <Grid.ColumnDefinitions>
-        </Grid.ColumnDefinitions>
+    <Grid x:Name="LayoutRoot" MouseDown="LayoutRoot_MouseDown" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition/>
+            <RowDefinition Height="16"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="128"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Digital Signature" VerticalAlignment="Center" FontSize="13.333" LineStackingStrategy="BlockLineHeight" HorizontalAlignment="Center"/>
+            <ComboBox ItemsSource="{Binding Certs}"
+                SelectedItem="{Binding SelectedCertInfo, Mode=TwoWay}"
+                DisplayMemberPath="Title"
+                SelectedIndex="0"
+                IsSynchronizedWithCurrentItem="True" Grid.Column="1"/>
+            <Button Command="{Binding Reload}" Content="Reload" HorizontalAlignment="Left" Grid.Column="2" d:LayoutOverrides="HorizontalAlignment"/>
+        </Grid>
+        <ListBox
+            IsSynchronizedWithCurrentItem="True"
+            HorizontalContentAlignment="Stretch"
+            ItemsSource="{Binding Jobs}"
+            Drop="Window_Drop" 
+            AllowDrop="True" 
+            DragEnter="Window_DragEnter"
+            MinHeight="320" Grid.Row="1">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid HorizontalAlignment="Stretch" Height="32" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="144"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Source="{Binding Icon}" Grid.Column="0"></Image>
+                        <Image VerticalAlignment="Bottom" HorizontalAlignment="Right" Height="16" Width="16" Grid.Column="0">
+                            <Image.ToolTip>
+                                <TextBlock>Error</TextBlock>
+                            </Image.ToolTip>
+                        </Image>
+                        <Button Command="{Binding OpenInput}" Grid.Column="1">
+                            <TextBlock Text="{Binding InputFileName}" TextWrapping="Wrap" TextTrimming="WordEllipsis"></TextBlock>
+                        </Button>
+                        <StackPanel Orientation="Horizontal" Grid.Column="2">
+                            <Button Visibility="{Binding Path=IsReady,Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Command="{Binding Sign}">Sign</Button>
+                            <Button Visibility="{Binding Path=IsSuccessful,Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Command="{Binding OpenOutput}">Result</Button>
+                            <Button Visibility="{Binding Path=IsFree,Converter={StaticResource ResourceKey=BooleanToVisibilityConverter}}" Command="{Binding Close}">Close</Button>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Canvas Grid.Row="2"/>
     </Grid>
 </Window>
