@@ -5,68 +5,64 @@ using NUnit.Framework;
 
 namespace wSigner.Test
 {
+    /// <summary>
+    /// NOTE: these tests depends on CertUtil.GetFromFile() runs correctly
+    /// </summary>
     [TestFixture]
     public class DocumentSignerTest
     {
-        private string _basePath, _serial;
+        private string  _certPath       = Path.Combine(Environment.CurrentDirectory, "input", "test-cert.pfx"), 
+                        _certPassword   = "1234",
+                        _inputPath      = Path.Combine(Environment.CurrentDirectory, "input"),
+                        _outputPath     = Path.Combine(Environment.CurrentDirectory, "output");
         
         [SetUp]
         public void Setup()
         {
-            //NOTE:this test is not meant to be fully automated, install the corresponding certificate and prepare the sample documents before running
-            _basePath = Environment.CurrentDirectory;
-            _serial = "54 03 4b e4 23 43 48 4a 50 c3 9a 00 d4 3c e1 cb";
-            var outputDir = Path.Combine(_basePath, "output");
-            if (!Directory.Exists(outputDir))
+            if (!Directory.Exists(_outputPath))
             {
-                Directory.CreateDirectory(outputDir);
+                Directory.CreateDirectory(_outputPath);
             }
         }
 
         [Test]
-        public void CanSignPdf()
+        [TestCase("signed.pdf", "74 fd 4c 4b c0 90 a3 0e d4 f0")]
+        [TestCase("signed.xlsx", "74 fd 4c 4b c0 90 a3 0e d4 f0")]
+        [TestCase("signed.docx", "74 fd 4c 4b c0 90 a3 0e d4 f0")]
+        [TestCase("signed.pptx", "74 fd 4c 4b c0 90 a3 0e d4 f0")]
+        public void CanVerifyX(string file, string serial)
         {
-            var input = Path.Combine(_basePath, "input", "input.pdf");
-            var output = Path.Combine(_basePath, "output", "output.pdf");
-            CanSignX(input, output, _serial);
+            file = Path.Combine(_inputPath, file);
+            var signer = DocumentSigner.For(file);
+            signer.Verify(File.OpenRead(file), serial).Should().BeTrue();
         }
 
         [Test]
-        public void CanSignXlsx()
+        [TestCase("input.docx", "output.docx")]
+        [TestCase("input.xlsx", "output.xlsx")]
+        [TestCase("input.pptx", "output.pptx")]
+        [TestCase("input.pdf", "output.pdf")]
+        [TestCase("signed.pdf", "signed2.pdf")]
+        [TestCase("signed.xlsx", "signed2.xlsx")]
+        [TestCase("signed.docx", "signed2.docx")]
+        [TestCase("signed.pptx", "signed2.pptx")]
+        public void CanSignX(string inputName, string outputName)
         {
-            var input = Path.Combine(_basePath, "input", "input.xlsx");
-            var output = Path.Combine(_basePath, "output", "output.xlsx");
-            CanSignX(input, output, _serial);
-        }
+            var input = Path.Combine(_inputPath, inputName);
+            var output = Path.Combine(_outputPath, outputName);
 
-        [Test]
-        public void CanSignPptx()
-        {
-            var input = Path.Combine(_basePath, "input", "input.pptx");
-            var output = Path.Combine(_basePath, "output", "output.pptx");
-            CanSignX(input, output, _serial);
-        }
-
-        [Test]
-        public void CanSignDocx()
-        {
-            var input = Path.Combine(_basePath, "input", "input.docx");
-            var output = Path.Combine(_basePath, "output", "output.docx");
-            CanSignX(input, output, _serial);
-        }
-
-        private static void CanSignX(string input, string output, string serial)
-        {
             if (File.Exists(output))
             {
                 File.Delete(output);
             }
-            
+
             File.Exists(output).Should().BeFalse();
             var signer = DocumentSigner.For(input);
-            signer.Sign(input, output, CertificateUtil.GetBySerial(serial, false));
+            var cert = CertUtil.GetFromFile(_certPath, _certPassword);
+            var serial = cert.SerialNumber;
+            signer.Sign(input, output, cert);
             File.Exists(output).Should().BeTrue();
-            signer.Verify(File.OpenRead(output), serial).Should().BeTrue();
+            CanVerifyX(output, serial);
         }
     }
 }
