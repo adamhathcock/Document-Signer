@@ -1,7 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using wSigner;
@@ -12,66 +13,134 @@ namespace wSignerUI
     {
         public DocumentSignerViewModel()
         {
-            ReloadCerts();
-            Reload = new RelayCommand(x => ReloadCerts());
             Jobs = new ObservableCollection<SignJobViewModel>();
+            ActiveCert = !String.IsNullOrEmpty(LastCertSerial) 
+                            ? CertUtil.GetBySerial(LastCertSerial) ?? CertUtil.GetAll(x => x, requirePrivateKey:true).FirstOrDefault()
+                            : CertUtil.GetAll(x => x, requirePrivateKey: true).FirstOrDefault();
+            ShowCertsDialog = new RelayCommand(x => AskUserForCert());
+            ShowActiveCert = new RelayCommand(x => DisplayActiveCert(), x => ActiveCert != null);
         }
 
-        public ObservableCollection<CertInfo> Certs { get; private set; }
+        //TODO: add LoadCertFromFile
+        public ICommand ShowCertsDialog { get; set; }
 
-        private CertInfo _selectedCertInfo;
-        public CertInfo SelectedCertInfo
-        {
-            get
-            {
-                return _selectedCertInfo;
-            }
-            set
-            {
-                _selectedCertInfo = value;
-                FirePropertyChanged(() => SelectedCertInfo);
-            }
-        }
+        public ICommand ShowActiveCert { get; set; }
 
-        public ICommand Reload { get; set; }
+        internal X509Certificate2 ActiveCert { get; private set; }
 
         public ObservableCollection<SignJobViewModel> Jobs { get; set; }
 
-        public void ReloadCerts()
-        {
-            if (Certs == null)
-            {
-                Certs = new ObservableCollection<CertInfo>();
-            }
-            Certs.Clear();
-            var allCerts = CertUtil.GetAll(xCert => new CertInfo
-                                                            {
-                                                                Title = xCert.FriendlyName,
-                                                                Issuer = xCert.Issuer,
-                                                                Serial = xCert.SerialNumber,
-                                                                Subject = xCert.Subject,
-                                                                ValidAfter = xCert.NotBefore,
-                                                                ValidBefore = xCert.NotAfter
-                                                            }).OrderBy(ci => ci.Title);
-            foreach (var certInfo in allCerts)
-            {
-                Certs.Add(certInfo);
-            }
-            SelectedCertInfo = Certs.FirstOrDefault();
-        }
+        //TODO:remember the serial of the cert used last time (registry, maybe?)
+        public string LastCertSerial { get; set; }
 
-        private X509Certificate2 _activeCert;
-
-        internal X509Certificate2 ActiveCert
+        public bool HasNoCert
         {
             get
             {
-                var selection = SelectedCertInfo;
-                if(_activeCert == null || (selection != null && _activeCert.SerialNumber != selection.Serial))
+                return ActiveCert == null;
+            }
+        }
+
+        public bool HasCert
+        {
+            get
+            {
+                return ActiveCert != null;
+            }
+        }
+
+        public string CertSubject
+        {
+            get
+            {
+                var cert = ActiveCert;
+                return cert != null 
+                        ? String.IsNullOrWhiteSpace(cert.FriendlyName)
+                            ? cert.GetNameInfo(X509NameType.SimpleName, false)
+                            : cert.FriendlyName
+                        : String.Empty;
+            }
+        }
+
+        public string CertExpiryDate
+        {
+            get
+            {
+                return ActiveCert != null ? ActiveCert.NotAfter.ToShortDateString() : String.Empty;
+            }
+        }
+
+        public bool CertHasExpired
+        {
+            get
+            {
+                return HasCert && DateTime.Now > ActiveCert.NotAfter;
+            }
+        }
+
+        public bool CertHasError
+        {
+            get
+            {
+                return !String.IsNullOrEmpty(CertError);
+            }
+        }
+
+        private string _certError;
+        public string CertError
+        {
+            get
+            {
+                var cert = ActiveCert;
+                if (_certError == null && cert != null)
                 {
-                    _activeCert = CertUtil.GetBySerial(selection.Serial);
+                    try
+                    {
+                        if (cert.Verify())
+                        {
+                            _certError = string.Empty;
+                        }
+                        else
+                        {
+                            _certError = "Invalid for unknown reason";
+                        }
+                    }
+                    catch (CryptographicException cryptoEx)
+                    {
+                        _certError = cryptoEx.Message;
+                    }
                 }
-                return _activeCert;
+                else
+                {
+                    _certError = string.Empty;
+                }
+                return _certError;
+            }
+            set { _certError = value; }
+        }
+
+        public void DisplayActiveCert()
+        {
+            var cert = ActiveCert;
+            if (cert != null)
+            {
+                X509Certificate2UI.DisplayCertificate(cert);
+            }
+        }
+
+        public void AskUserForCert()
+        {
+            var newCert = CertUtil.GetByDialog(requirePrivateKey: true);
+            if (newCert != null)
+            {
+                ActiveCert = newCert;
+                CertError = null;
+                FirePropertyChanged(() => HasCert);
+                FirePropertyChanged(() => HasNoCert);
+                FirePropertyChanged(() => CertError);
+                FirePropertyChanged(() => CertHasExpired);
+                FirePropertyChanged(() => CertExpiryDate);
+                FirePropertyChanged(() => CertSubject);
             }
         }
 
@@ -82,30 +151,35 @@ namespace wSignerUI
                 var job = new SignJobViewModel(file);
                 if (job.IsInvalid)
                 {
+                    //TODO:explain why, don't just fail so silently
                     continue;
                 }
                 job.Close = new RelayCommand(x => Jobs.Remove(job));
                 job.Sign = new RelayCommand(x =>
                 {
-                    var signTask = Task.Factory
-                    .StartNew(() =>
+                    var cert = ActiveCert;
+                    if (cert != null)
                     {
-                        
-                        Thread.Sleep(100);
-                        job.State = SignJobState.Signing;
-                        DocumentSigner.For(job.FileType)
-                                        .Sign(job.InputFile, job.OutputFile, ActiveCert);
-                    });
-                    signTask.ContinueWith(task =>
-                    {
-                        job.Error = task.Exception.InnerException.Message;
-                        job.State = SignJobState.Failed;
-                    }, TaskContinuationOptions.OnlyOnFaulted);
-                    signTask.ContinueWith(task =>
-                    {
-                        job.State = SignJobState.Signed;
-                    }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                        var signTask = Task.Factory.StartNew(() =>
+                        {
+                            job.State = SignJobState.Signing;
+                            DocumentSigner.For(job.FileType)
+                                .Sign(job.InputFile, job.OutputFile, cert);
+                        });
+
+                        signTask.ContinueWith(task =>
+                        {
+                            job.Error = task.Exception.InnerException.Message;
+                            job.State = SignJobState.Failed;
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+
+                        signTask.ContinueWith(task =>
+                        {
+                            job.State = SignJobState.Signed;
+                        }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                    }
                 });
+                
                 Jobs.Add(job);
                 if (job.IsReady)
                 {
