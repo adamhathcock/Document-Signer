@@ -44,7 +44,7 @@ namespace wSignerUI
                 Certs = new ObservableCollection<CertInfo>();
             }
             Certs.Clear();
-            var allCerts = CertificateUtil.GetAll(xCert => new CertInfo
+            var allCerts = CertUtil.GetAll(xCert => new CertInfo
                                                             {
                                                                 Title = xCert.FriendlyName,
                                                                 Issuer = xCert.Issuer,
@@ -69,7 +69,7 @@ namespace wSignerUI
                 var selection = SelectedCertInfo;
                 if(_activeCert == null || (selection != null && _activeCert.SerialNumber != selection.Serial))
                 {
-                    _activeCert = CertificateUtil.GetBySerial(selection.Serial);
+                    _activeCert = CertUtil.GetBySerial(selection.Serial);
                 }
                 return _activeCert;
             }
