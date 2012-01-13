@@ -36,11 +36,14 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationFramework" />
+    <Reference Include="PresentationFramework.Classic" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Interactivity" />
     <Reference Include="System.Xaml" />
     <Reference Include="PresentationCore" />
     <Reference Include="WindowsBase" />
@@ -81,14 +84,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\filetype-pdf.png" />
-    <Resource Include="Resources\filetypes.png" />
-    <Resource Include="Resources\filetype-ooxml.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\filetype-invalid.png" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\itextsharp.dll" />
     <EmbeddedResource Include="Resources\wSigner.dll" />
   </ItemGroup>
@@ -100,6 +95,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Application.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\icon-error-16x16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\icon-ok-16x16.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath32)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

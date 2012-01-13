@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -31,7 +30,6 @@ namespace wSignerUI
             {
                 _selectedCertInfo = value;
                 FirePropertyChanged(() => SelectedCertInfo);
-                //TODO:update jobs' can execute commands
             }
         }
 
@@ -86,13 +84,14 @@ namespace wSignerUI
                 {
                     continue;
                 }
-                job.Close = new RelayCommand(x => Jobs.Remove(job), x=>!job.IsBusy);
+                job.Close = new RelayCommand(x => Jobs.Remove(job));
                 job.Sign = new RelayCommand(x =>
                 {
                     var signTask = Task.Factory
                     .StartNew(() =>
                     {
-                        Thread.Sleep(50);
+                        
+                        Thread.Sleep(100);
                         job.State = SignJobState.Signing;
                         DocumentSigner.For(job.FileType)
                                         .Sign(job.InputFile, job.OutputFile, ActiveCert);
@@ -106,7 +105,7 @@ namespace wSignerUI
                     {
                         job.State = SignJobState.Signed;
                     }, TaskContinuationOptions.OnlyOnRanToCompletion);
-                }, x => job.IsReady && SelectedCertInfo != null);
+                });
                 Jobs.Add(job);
                 if (job.IsReady)
                 {

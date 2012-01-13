@@ -29,10 +29,11 @@ namespace wSignerUI
             var ext = Path.GetExtension(inputFile);
             OutputFile = Path.Combine(dir, fileName + "-signed" + ext);
             FileType = ext;
+            
+            //TODO: may have to try catch this, and use a backup icon on failure
             Icon = Utils.GetBitmapSourceIconFromFile(inputFile);
             OpenOutput = new RelayCommand(
-                    o => Process.Start(new ProcessStartInfo { FileName = OutputFile, UseShellExecute = true }),
-                    o => IsSuccessful);
+                    o => Process.Start(new ProcessStartInfo { FileName = OutputFile, UseShellExecute = true }));
             OpenInput = new RelayCommand(o => Process.Start(new ProcessStartInfo { FileName = InputFile, UseShellExecute = true }));
 
             State = SignJobState.Pending;
@@ -48,7 +49,10 @@ namespace wSignerUI
                 {
                     _state = value;
                     FirePropertyChanged(() => State);
+					FirePropertyChanged(() => Description);
+					FirePropertyChanged(() => Error);
                     FirePropertyChanged(() => IsBusy);
+                    FirePropertyChanged(() => IsFree);
                     FirePropertyChanged(() => IsCompleted);
                     FirePropertyChanged(() => IsSuccessful);
                     FirePropertyChanged(() => IsFaulted);
@@ -84,7 +88,7 @@ namespace wSignerUI
 
         public bool IsReady { get { return State == SignJobState.Pending; } }
 
-        public bool IsFree { get { return !IsBusy; } }
+        public bool IsFree { get { return State != SignJobState.Signing; } }
 
         public RelayCommand OpenOutput { get; set; }
 
