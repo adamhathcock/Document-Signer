@@ -73,7 +73,7 @@ namespace wSigner
                         if(result && !String.IsNullOrWhiteSpace(serial))
                         {
                             var actualSerial = pkcs7.SigningCertificate.SerialNumber.ToString(16);
-                            var expectedSerial = CertificateUtil.NormalizeSerialString(serial);
+                            var expectedSerial = CertUtil.NormalizeSerialString(serial);
                             result = String.Equals(actualSerial, expectedSerial, StringComparison.InvariantCultureIgnoreCase);
                         }
                     }

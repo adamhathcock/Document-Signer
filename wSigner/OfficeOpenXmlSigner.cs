@@ -72,7 +72,7 @@ namespace wSigner
                     if (result && !String.IsNullOrWhiteSpace(serial))
                     {
                         var actualSerial = new BigInteger(sig.Signer.GetSerialNumber());
-                        var expectedSerial = CertificateUtil.HexadecimalStringToBigInt(serial);
+                        var expectedSerial = CertUtil.HexadecimalStringToBigInt(serial);
                         result = actualSerial == expectedSerial;
                     }
                 }
