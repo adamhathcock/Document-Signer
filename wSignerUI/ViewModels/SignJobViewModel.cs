@@ -49,8 +49,8 @@ namespace wSignerUI
                 {
                     _state = value;
                     FirePropertyChanged(() => State);
-					FirePropertyChanged(() => Description);
-					FirePropertyChanged(() => Error);
+                    FirePropertyChanged(() => Description);
+                    FirePropertyChanged(() => Error);
                     FirePropertyChanged(() => IsBusy);
                     FirePropertyChanged(() => IsFree);
                     FirePropertyChanged(() => IsCompleted);

@@ -6,17 +6,24 @@ using System.Windows;
 
 namespace wSignerUI
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App
+    class Program
     {
         private static readonly IDictionary<string, Assembly> Libs = new Dictionary<string, Assembly>();
 
-        protected override void OnStartup(StartupEventArgs e)
+        [STAThread]
+        public static void Main(params string[] arguments)
         {
             AppDomain.CurrentDomain.AssemblyResolve += FindAssembly;
-            base.OnStartup(e);
+            if (arguments.Length > 0 && File.Exists(arguments[0]))
+            {
+                var file = arguments[0];
+                DocumentSignerViewModel.SignFile(file);
+            }
+            else
+            {
+                var app = new Application();
+                app.Run(new MainWindow());    
+            }
         }
 
         static Assembly FindAssembly(object sender, ResolveEventArgs args)

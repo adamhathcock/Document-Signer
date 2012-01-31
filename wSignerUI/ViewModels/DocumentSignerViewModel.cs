@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using wSigner;
 
@@ -14,7 +16,7 @@ namespace wSignerUI
         public DocumentSignerViewModel()
         {
             Jobs = new ObservableCollection<SignJobViewModel>();
-            ActiveCert = !String.IsNullOrEmpty(LastCertSerial) 
+            ActiveCert = !String.IsNullOrEmpty(LastCertSerial)
                             ? CertUtil.GetBySerial(LastCertSerial) ?? CertUtil.GetAll(x => x, requirePrivateKey:true).FirstOrDefault()
                             : CertUtil.GetAll(x => x, requirePrivateKey: true).FirstOrDefault();
             ShowCertsDialog = new RelayCommand(x => AskUserForCert());
@@ -185,6 +187,25 @@ namespace wSignerUI
                 {
                     job.Sign.Execute(null);
                 }
+            }
+        }
+
+        public static void SignFile(string file)
+        {
+            var signer = DocumentSigner.For(file);
+            if (signer != null)
+            {
+                var cert = CertUtil.GetByDialog(requirePrivateKey: true);
+                if (cert != null)
+                {
+                    var ext = Path.GetExtension(file);
+                    var bareFileName = Path.GetFileNameWithoutExtension(file);
+                    signer.Sign(file, bareFileName + "-signed" + ext, cert);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Only documents of type pdf, docx, xlsx or pptx can be digitally signed");
             }
         }
     }
