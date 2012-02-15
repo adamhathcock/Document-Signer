@@ -38,7 +38,7 @@ namespace wSigner
         }
 
         /// <summary>
-        /// Verifies
+        /// Verify
         /// </summary>
         /// <param name="input">The input.</param>
         /// <param name="serial">The serial.</param>
